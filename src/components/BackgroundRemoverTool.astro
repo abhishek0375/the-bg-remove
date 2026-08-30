@@ -1,0 +1,391 @@
+---
+// Component: BackgroundRemoverTool.astro
+// Manages the 4 tool states: 'upload' | 'processing' | 'result' | 'error'
+---
+
+<div id="bg-remover-app" class="w-full max-w-4xl mx-auto">
+  
+  <!-- ================= STATE 1: UPLOAD STATE ================= -->
+  <div id="state-upload" class="bg-white rounded-xl border border-border p-6 sm:p-10 shadow-card">
+    
+    <!-- Drag and drop zone -->
+    <div
+      id="drop-zone"
+      class="relative border-2 border-dashed border-border rounded-xl p-8 sm:p-14 text-center hover:border-primary/70 transition-all cursor-pointer bg-surface-secondary/50 group"
+      tabindex="0"
+      role="button"
+      aria-label="Upload image area"
+    >
+      <input
+        type="file"
+        id="file-input"
+        class="hidden"
+        accept="image/png, image/jpeg, image/jpg, image/webp"
+      />
+
+      <div class="flex flex-col items-center justify-center space-y-4 pointer-events-none">
+        <div class="w-16 h-16 rounded-xl bg-primary-light text-primary flex items-center justify-center shadow-subtle group-hover:scale-105 transition-transform">
+          <svg class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        </div>
+
+        <div class="space-y-1.5">
+          <h2 class="text-xl sm:text-2xl font-bold text-heading">
+            Upload image to remove background
+          </h2>
+          <p class="text-sm text-body">
+            AI-powered removal. Supports PNG, JPG, or WEBP.
+          </p>
+        </div>
+
+        <div class="pt-2">
+          <button
+            type="button"
+            id="browse-btn"
+            class="pointer-events-auto inline-flex items-center justify-center px-6 py-3 text-sm font-semibold text-white bg-primary hover:bg-primary-hover rounded-md shadow-card transition-all active:scale-[0.98]"
+          >
+            Select Image
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample images quick test gallery -->
+    <div class="mt-8 pt-6 border-t border-border">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs font-semibold text-heading uppercase tracking-wider">Try our AI with samples:</span>
+      </div>
+      <div class="grid grid-cols-3 sm:grid-cols-4 gap-3">
+        <button
+          type="button"
+          class="sample-btn group relative rounded-lg overflow-hidden border border-border hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary aspect-[4/3]"
+          data-sample="portrait"
+          data-src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80"
+          data-name="portrait-sample.jpg"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80"
+            alt="Portrait sample"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+          />
+        </button>
+
+        <button
+          type="button"
+          class="sample-btn group relative rounded-lg overflow-hidden border border-border hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary aspect-[4/3]"
+          data-sample="product"
+          data-src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=800&q=80"
+          data-name="sneaker-product.jpg"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=300&q=80"
+            alt="Product shoe sample"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+          />
+        </button>
+
+        <button
+          type="button"
+          class="sample-btn group relative rounded-lg overflow-hidden border border-border hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary aspect-[4/3]"
+          data-sample="pet"
+          data-src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=800&q=80"
+          data-name="dog-sample.jpg"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1543466835-00a7907e9de1?auto=format&fit=crop&w=300&q=80"
+            alt="Pet sample"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+          />
+        </button>
+
+        <button
+          type="button"
+          class="sample-btn hidden sm:block group relative rounded-lg overflow-hidden border border-border hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary aspect-[4/3]"
+          data-sample="car"
+          data-src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80"
+          data-name="vehicle-sample.jpg"
+        >
+          <img
+            src="https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=300&q=80"
+            alt="Car sample"
+            class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+          />
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= STATE 2: PROCESSING STATE ================= -->
+  <div id="state-processing" class="hidden bg-white rounded-xl border border-border p-8 sm:p-14 text-center shadow-card space-y-6">
+    <div class="w-16 h-16 mx-auto rounded-full bg-primary-light text-primary flex items-center justify-center">
+      <svg class="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+      </svg>
+    </div>
+
+    <div class="space-y-2">
+      <h3 class="text-xl font-bold text-heading">AI Analyzing Image...</h3>
+      <p id="processing-step-text" class="text-sm text-body">
+        Our neural engine is isolating the subject.
+      </p>
+    </div>
+  </div>
+
+  <!-- ================= STATE 3: RESULT STATE ================= -->
+  <div id="state-result" class="hidden bg-white rounded-xl border border-border overflow-hidden shadow-card">
+    
+    <div class="p-4 sm:p-5 bg-surface-secondary border-b border-border flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span id="result-filename" class="text-sm font-medium text-heading">Result.png</span>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <button
+          type="button"
+          id="upload-another-btn"
+          class="text-xs font-semibold text-body hover:text-heading mr-1"
+        >
+          New Upload
+        </button>
+
+        <!-- Hidden anchor used for actual download trigger -->
+        <a id="download-btn" href="#" download="cutout.png" class="hidden"></a>
+
+        <!-- Format buttons -->
+        <button id="dl-png"
+          class="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-primary border border-primary/40 hover:bg-primary/5 rounded-md transition-colors"
+        >
+          ↓ PNG
+        </button>
+        <button id="dl-webp"
+          class="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-body border border-border hover:bg-surface-secondary rounded-md transition-colors"
+        >
+          ↓ WebP
+        </button>
+        <button id="dl-jpg"
+          class="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-body border border-border hover:bg-surface-secondary rounded-md transition-colors"
+        >
+          ↓ JPG
+        </button>
+      </div>
+    </div>
+
+    <div class="relative w-full aspect-[4/3] bg-checkerboard flex items-center justify-center p-6">
+      <img
+        id="result-cutout-img"
+        src=""
+        alt="Transparent background result"
+        class="max-w-full max-h-full object-contain rounded"
+      />
+    </div>
+  </div>
+
+  <!-- ================= STATE 4: ERROR STATE ================= -->
+  <div id="state-error" class="hidden bg-white rounded-xl border border-error/30 p-8 sm:p-12 text-center shadow-card space-y-4">
+    <div class="w-14 h-14 mx-auto rounded-full bg-red-50 flex items-center justify-center">
+      <svg class="w-7 h-7 text-error" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      </svg>
+    </div>
+    <h3 class="text-xl font-bold text-heading">Processing Failed</h3>
+    <p id="error-message" class="text-sm text-body max-w-sm mx-auto"></p>
+    <button type="button" id="error-retry-btn" class="px-6 py-3 text-sm font-semibold text-white bg-primary rounded-md hover:bg-primary-hover transition-colors">
+      Try Again
+    </button>
+  </div>
+</div>
+
+<script type="module">
+  import { AutoModel, AutoProcessor, RawImage } from '@xenova/transformers';
+
+  // ── Model loading (lazy, cached) ──────────────────────────────────────────
+  const MODEL_ID = 'briaai/RMBG-1.4';
+  let modelInstance = null;
+  let processorInstance = null;
+
+  async function loadModel(onStatus) {
+    if (!modelInstance) {
+      onStatus('Loading AI model...');
+      [modelInstance, processorInstance] = await Promise.all([
+        AutoModel.from_pretrained(MODEL_ID, { device: 'auto' }),
+        AutoProcessor.from_pretrained(MODEL_ID),
+      ]);
+    }
+    return { model: modelInstance, processor: processorInstance };
+  }
+
+  // ── DOM refs ──────────────────────────────────────────────────────────────
+  const stateUpload      = document.getElementById('state-upload');
+  const stateProcessing  = document.getElementById('state-processing');
+  const stateResult      = document.getElementById('state-result');
+  const stateError       = document.getElementById('state-error');
+  const fileInput        = document.getElementById('file-input');
+  const browseBtn        = document.getElementById('browse-btn');
+  const dropZone         = document.getElementById('drop-zone');
+  const sampleBtns       = document.querySelectorAll('.sample-btn');
+  const resultCutoutImg  = document.getElementById('result-cutout-img');
+  const resultFilename   = document.getElementById('result-filename');
+  const downloadBtn      = document.getElementById('download-btn');
+  const uploadAnotherBtn = document.getElementById('upload-another-btn');
+  const errorRetryBtn    = document.getElementById('error-retry-btn');
+  const stepText         = document.getElementById('processing-step-text');
+  const errorMsg         = document.getElementById('error-message');
+
+  // ── State machine ─────────────────────────────────────────────────────────
+  function setState(state) {
+    [stateUpload, stateProcessing, stateResult, stateError]
+      .forEach(el => el?.classList.add('hidden'));
+    ({ upload: stateUpload, processing: stateProcessing,
+       result: stateResult, error: stateError }[state])?.classList.remove('hidden');
+  }
+
+  function setStep(msg) { if (stepText) stepText.textContent = msg; }
+
+  // ── Core inference ────────────────────────────────────────────────────────
+  async function removeBackground(src) {
+    const { model, processor } = await loadModel(setStep);
+
+    setStep('Preparing image...');
+    // RawImage.fromURL handles both data-URLs and https:// URLs
+    const image = await RawImage.fromURL(src);
+
+    setStep('Running AI model...');
+    const { pixel_values } = await processor(image);
+    const { output } = await model({ input: pixel_values });
+
+    setStep('Compositing result...');
+    // output[0] is the foreground mask — resize it to the original image dims
+    const mask = await RawImage.fromTensor(output[0].mul(255).to('uint8'))
+                               .resize(image.width, image.height);
+
+    // Draw original image + alpha mask onto a canvas
+    const canvas  = document.createElement('canvas');
+    canvas.width  = image.width;
+    canvas.height = image.height;
+    const ctx  = canvas.getContext('2d');
+
+    // Draw original image
+    const imgEl = new Image();
+    imgEl.src = src;
+    await new Promise((res, rej) => { imgEl.onload = res; imgEl.onerror = rej; });
+    ctx.drawImage(imgEl, 0, 0);
+
+    // Apply mask as alpha channel pixel‑by‑pixel (ensure correct channel)
+    const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const d = imgData.data;
+    // mask.data may be single‑channel (len = w*h) or RGBA (len = w*h*4)
+    const maskLen = image.width * image.height;
+    const maskPixels = mask.data.length === maskLen ? mask.data : (() => {
+      // extract first channel if RGBA
+      const arr = new Uint8Array(maskLen);
+      for (let i = 0; i < maskLen; i++) arr[i] = mask.data[i * 4];
+      return arr;
+    })();
+    for (let i = 0; i < maskLen; i++) {
+      d[i * 4 + 3] = maskPixels[i];
+    }
+    ctx.putImageData(imgData, 0, 0);
+    return canvas;
+  }
+
+  // ── Process a file or sample ──────────────────────────────────────────────
+  async function processImage({ name, src }) {
+    setState('processing');
+    setStep('Loading AI model...');
+    try {
+      const canvas = await removeBackground(src);
+      setStep('Done');
+
+      // PNG (transparent)
+      const pngUrl = canvas.toDataURL('image/png');
+      // WebP (transparent)
+      const webpUrl = canvas.toDataURL('image/webp');
+      // JPEG (white background)
+      const jpgCanvas = document.createElement('canvas');
+      jpgCanvas.width = canvas.width; jpgCanvas.height = canvas.height;
+      const jCtx = jpgCanvas.getContext('2d');
+      jCtx.fillStyle = '#ffffff';
+      jCtx.fillRect(0, 0, jpgCanvas.width, jpgCanvas.height);
+      jCtx.drawImage(canvas, 0, 0);
+      const jpgUrl = jpgCanvas.toDataURL('image/jpeg', 0.92);
+
+      if (resultCutoutImg) resultCutoutImg.src = pngUrl;
+      if (resultFilename)  resultFilename.textContent = name;
+      if (downloadBtn) {
+        // Store URLs for each format
+        downloadBtn.dataset.png = pngUrl;
+        downloadBtn.dataset.webp = webpUrl;
+        downloadBtn.dataset.jpg = jpgUrl;
+        // Default to PNG download with fixed filename
+        downloadBtn.href = pngUrl;
+        downloadBtn.download = 'background-removed.png';
+      }
+      setState('result');
+
+      // Wire up format toggle buttons
+      document.getElementById('dl-png')?.addEventListener('click', () => {
+        downloadBtn.href = pngUrl;
+        downloadBtn.download = 'background-removed.png';
+        downloadBtn.click();
+      });
+      document.getElementById('dl-webp')?.addEventListener('click', () => {
+        downloadBtn.href = webpUrl;
+        downloadBtn.download = 'background-removed.webp';
+        downloadBtn.click();
+      });
+        document.getElementById('dl-jpg')?.addEventListener('click', () => {
+          downloadBtn.href = jpgUrl;
+          downloadBtn.download = 'background-removed.jpg';
+          downloadBtn.click();
+        });
+
+    } catch (err) {
+      console.error('[RMBG] Error:', err);
+      if (errorMsg) errorMsg.textContent = err?.message || 'Unknown error';
+      setState('error');
+    }
+  }
+
+  // ── File helpers ──────────────────────────────────────────────────────────
+  function handleFile(file) {
+    const reader = new FileReader();
+    reader.onload = e => {
+      if (e.target?.result) processImage({ name: file.name, src: e.target.result });
+    };
+    reader.readAsDataURL(file);
+  }
+
+  // ── Event listeners ───────────────────────────────────────────────────────
+  fileInput?.addEventListener('change', e => {
+    if (e.target.files?.[0]) handleFile(e.target.files[0]);
+  });
+  browseBtn?.addEventListener('click', () => fileInput?.click());
+
+  // Drag-and-drop
+  dropZone?.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('border-primary');
+  });
+  dropZone?.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-primary');
+  });
+  dropZone?.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('border-primary');
+    const file = e.dataTransfer?.files?.[0];
+    if (file && file.type.startsWith('image/')) handleFile(file);
+  });
+
+  sampleBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const src  = btn.getAttribute('data-src');
+      const name = btn.getAttribute('data-name') || 'sample.jpg';
+      if (src) processImage({ name, src });
+    });
+  });
+
+  uploadAnotherBtn?.addEventListener('click', () => setState('upload'));
+  errorRetryBtn?.addEventListener('click',    () => setState('upload'));
+</script>

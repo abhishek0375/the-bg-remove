@@ -1,0 +1,83 @@
+---
+import Layout from '../layouts/Layout.astro';
+import BackgroundRemoverTool from '../components/BackgroundRemoverTool.astro';
+
+const toolFaqs = [
+  {
+    question: 'How do I download the background-free image?',
+    answer: 'Once your photo has processed, preview the transparent result and click the "Download PNG" button to save it directly to your device.',
+  },
+  {
+    question: 'What happens to my uploaded image?',
+    answer: 'Your images are processed securely in temporary client memory and are never saved, stored on servers, or used for AI training.',
+  },
+  {
+    question: 'Why is PNG format used for the output?',
+    answer: 'PNG supports full alpha transparency channels, allowing you to place your cutout seamlessly onto any background, slide, or design canvas.',
+  },
+];
+---
+
+<Layout
+  title="AI Background Remover Tool — Instant Transparent PNG | thebgremove.com"
+  description="Upload your photo to automatically remove background with AI precision. Download high-resolution transparent PNG cutouts instantly for free."
+  activePath="/remove-background"
+  faqSchema={toolFaqs}
+>
+  <div class="bg-surface-secondary min-h-[calc(100vh-140px)] py-10 sm:py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Page Header -->
+      <div class="text-center max-w-2xl mx-auto mb-8 sm:mb-12">
+        <h1 class="text-2xl sm:text-4xl font-bold text-heading tracking-tight">
+          AI Background Remover
+        </h1>
+        <p class="mt-2 text-sm sm:text-base text-body">
+          Upload any image to remove the background automatically in seconds.
+        </p>
+      </div>
+
+      <!-- Main Tool Interactive Container -->
+      <BackgroundRemoverTool />
+
+      <!-- Quick Feature Callouts Below Tool -->
+      <div class="mt-12 max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+        <div class="p-4 bg-white rounded-lg border border-border shadow-subtle">
+          <div class="text-primary font-semibold text-sm mb-1">⚡ Automatic AI Cutout</div>
+          <p class="text-xs text-body">Detects people, products, cars, and animals with sharp edge boundaries.</p>
+        </div>
+        <div class="p-4 bg-white rounded-lg border border-border shadow-subtle">
+          <div class="text-primary font-semibold text-sm mb-1">🎯 100% Transparent PNG</div>
+          <p class="text-xs text-body">Crisp alpha channel output ready for e-commerce, ads, and graphic design.</p>
+        </div>
+        <div class="p-4 bg-white rounded-lg border border-border shadow-subtle">
+          <div class="text-primary font-semibold text-sm mb-1">🔒 Private & Secure</div>
+          <p class="text-xs text-body">Your files remain confidential and are purged automatically.</p>
+        </div>
+      </div>
+
+      <!-- Quick FAQ Section for SEO -->
+      <div class="mt-16 max-w-3xl mx-auto">
+        <h2 class="text-xl font-bold text-heading text-center mb-6">Frequently Asked Questions</h2>
+        <div class="space-y-3">
+          {toolFaqs.map((faq) => (
+            <details class="group bg-white rounded-lg border border-border p-4 transition-all [&_summary::-webkit-details-marker]:hidden">
+              <summary class="flex items-center justify-between cursor-pointer font-medium text-heading text-sm select-none">
+                <span>{faq.question}</span>
+                <span class="ml-4 shrink-0 transition duration-200 group-open:-rotate-180 text-body group-open:text-primary">
+                  <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </span>
+              </summary>
+              <div class="mt-2 text-xs text-body leading-relaxed pt-2 border-t border-border/50">
+                <p>{faq.answer}</p>
+              </div>
+            </details>
+          ))}
+        </div>
+      </div>
+
+    </div>
+  </div>
+</Layout>
