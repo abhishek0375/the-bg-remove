@@ -209,7 +209,7 @@
     if (!modelInstance) {
       onStatus('Loading AI model...');
       [modelInstance, processorInstance] = await Promise.all([
-        AutoModel.from_pretrained(MODEL_ID, { device: 'auto' }),
+        AutoModel.from_pretrained(MODEL_ID),
         AutoProcessor.from_pretrained(MODEL_ID),
       ]);
     }
@@ -290,6 +290,29 @@
     return canvas;
   }
 
+  // ── Download URL storage (updated each time a result is ready) ─────────
+  let currentUrls = { png: '', webp: '', jpg: '' };
+
+  // Wire up format toggle buttons ONCE — they read from currentUrls
+  document.getElementById('dl-png')?.addEventListener('click', () => {
+    if (!currentUrls.png) return;
+    downloadBtn.href = currentUrls.png;
+    downloadBtn.download = 'background-removed.png';
+    downloadBtn.click();
+  });
+  document.getElementById('dl-webp')?.addEventListener('click', () => {
+    if (!currentUrls.webp) return;
+    downloadBtn.href = currentUrls.webp;
+    downloadBtn.download = 'background-removed.webp';
+    downloadBtn.click();
+  });
+  document.getElementById('dl-jpg')?.addEventListener('click', () => {
+    if (!currentUrls.jpg) return;
+    downloadBtn.href = currentUrls.jpg;
+    downloadBtn.download = 'background-removed.jpg';
+    downloadBtn.click();
+  });
+
   // ── Process a file or sample ──────────────────────────────────────────────
   async function processImage({ name, src }) {
     setState('processing');
@@ -311,35 +334,17 @@
       jCtx.drawImage(canvas, 0, 0);
       const jpgUrl = jpgCanvas.toDataURL('image/jpeg', 0.92);
 
+      // Store latest URLs so the once-registered listeners can use them
+      currentUrls = { png: pngUrl, webp: webpUrl, jpg: jpgUrl };
+
       if (resultCutoutImg) resultCutoutImg.src = pngUrl;
       if (resultFilename)  resultFilename.textContent = name;
       if (downloadBtn) {
-        // Store URLs for each format
-        downloadBtn.dataset.png = pngUrl;
-        downloadBtn.dataset.webp = webpUrl;
-        downloadBtn.dataset.jpg = jpgUrl;
         // Default to PNG download with fixed filename
         downloadBtn.href = pngUrl;
         downloadBtn.download = 'background-removed.png';
       }
       setState('result');
-
-      // Wire up format toggle buttons
-      document.getElementById('dl-png')?.addEventListener('click', () => {
-        downloadBtn.href = pngUrl;
-        downloadBtn.download = 'background-removed.png';
-        downloadBtn.click();
-      });
-      document.getElementById('dl-webp')?.addEventListener('click', () => {
-        downloadBtn.href = webpUrl;
-        downloadBtn.download = 'background-removed.webp';
-        downloadBtn.click();
-      });
-        document.getElementById('dl-jpg')?.addEventListener('click', () => {
-          downloadBtn.href = jpgUrl;
-          downloadBtn.download = 'background-removed.jpg';
-          downloadBtn.click();
-        });
 
     } catch (err) {
       console.error('[RMBG] Error:', err);
@@ -361,7 +366,14 @@
   fileInput?.addEventListener('change', e => {
     if (e.target.files?.[0]) handleFile(e.target.files[0]);
   });
-  browseBtn?.addEventListener('click', () => fileInput?.click());
+  browseBtn?.addEventListener('click', (e) => { e.stopPropagation(); fileInput?.click(); });
+
+  // Make the entire drop zone clickable to open the file picker
+  dropZone?.addEventListener('click', (e) => {
+    // Don't double-fire if the click came from the browse button
+    if (e.target === browseBtn || browseBtn?.contains(e.target)) return;
+    fileInput?.click();
+  });
 
   // Drag-and-drop
   dropZone?.addEventListener('dragover', e => {
